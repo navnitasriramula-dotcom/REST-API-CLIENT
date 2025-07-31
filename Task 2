@@ -1,0 +1,62 @@
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import org.json.JSONObject;
+
+public class WeatherApiClient {
+
+    public static void main(String[] args) {
+        // Coordinates for New Delhi, India
+        double latitude = 28.6139;
+        double longitude = 77.2090;
+
+        // Public API endpoint (Open-Meteo)
+        String apiUrl = String.format(
+            "https://api.open-meteo.com/v1/forecast?latitude=%f&longitude=%f&current_weather=true",
+            latitude, longitude
+        );
+
+        try {
+            // Create HTTP connection
+            URL url = new URL(apiUrl);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("GET");
+
+            // Check response status
+            int responseCode = conn.getResponseCode();
+            if (responseCode == HttpURLConnection.HTTP_OK) {
+                // Read API response
+                BufferedReader reader = new BufferedReader(
+                    new InputStreamReader(conn.getInputStream())
+                );
+                StringBuilder response = new StringBuilder();
+                String line;
+
+                while ((line = reader.readLine()) != null) {
+                    response.append(line);
+                }
+                reader.close();
+
+                // Parse JSON
+                JSONObject jsonResponse = new JSONObject(response.toString());
+                JSONObject currentWeather = jsonResponse.getJSONObject("current_weather");
+
+                // Display weather data
+                System.out.println("========== Current Weather Report ==========");
+                System.out.println("Location: New Delhi, India");
+                System.out.println("Temperature: " + currentWeather.getDouble("temperature") + " C");
+                System.out.println("Wind Speed: " + currentWeather.getDouble("windspeed") + " km/h");
+                System.out.println("Weather Time: " + currentWeather.getString("time"));
+                System.out.println("============================================");
+
+            } else {
+                System.out.println("Failed to fetch weather data. HTTP Code: " + responseCode);
+            }
+
+        } catch (Exception e) {
+            System.out.println("Error: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+}
